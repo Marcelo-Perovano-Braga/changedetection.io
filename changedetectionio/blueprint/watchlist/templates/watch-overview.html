@@ -268,7 +268,7 @@ window.watchOverviewI18n = {
             <a title="{{ _('RSS Feed') }}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
         </div>
 
-    <div id="checkbox-operations">
+    <div id="checkbox-operations" data-list-layout="measured">
         <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
         <button type="button" class="pure-button button-secondary button-xsmall" id="check-invert"><i data-feather="repeat" ></i>&nbsp;{{ _('Invert') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" ></i>&nbsp;{{ _('Pause') }}</button>

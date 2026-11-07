@@ -35,7 +35,7 @@
                     'multiple-history' if history_n >= 2 else '',
                     'use-html-title' if system_use_url_watchlist else 'no-html-title',
                 ] -%}
-            <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}" class="{{ row_classes | reject('equalto', '') | join(' ') }}">
+            <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}" data-row-layout="measured" class="{{ row_classes | reject('equalto', '') | join(' ') }}">
                 <td class="inline checkbox-uuid" ><div><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " >{# <span class="counter-i">{{ loop.index+pagination.skip }}</span>#}</div></td>
                 <td class="inline watch-controls">
                     <div>
@@ -74,18 +74,20 @@
                         </div>
                     {%  endif %}
                         <div class="watch-text-info">
-                            <span class="watch-title">
-                                {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
-                                    {{ watch.label }}
-                                {% else %}
-                                    {{ watch.get('title') or watch.link }}
-                                {% endif %}
-                                <a class="external" target="_blank" rel="noopener" href="{{ open_link }}" title="{{ open_link }}"><i data-feather="external-link"></i></a>
-                            </span>
+                            <div class="watch-summary" data-row-summary>
+                                <span class="watch-title" data-row-title>
+                                    {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
+                                        {{ watch.label }}
+                                    {% else %}
+                                        {{ watch.get('title') or watch.link }}
+                                    {% endif %}
+                                    <a class="external" target="_blank" rel="noopener" href="{{ open_link }}" title="{{ open_link }}"><i data-feather="external-link"></i></a>
+                                </span>
 
-                            {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
-                              <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
-                            {%- endfor -%}
+                                {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
+                                  <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
+                                {%- endfor -%}
+                            </div>
                             <div class="error-text" style="display:none;">{{ error_texts|safe }}</div>
                             {%- for note in watch_list_extra_text(watch) %}
                             <div class="extra-watch-text">{{ note }}</div>
@@ -172,7 +174,7 @@
                     </span>
                 </td>
                 <td class="buttons">
-                    <div>
+                    <div class="watch-actions" data-row-actions>
                     {%- set target_attr = ' target="' ~ watch.uuid ~ '"' if datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab') else '' -%}
                     <a href="" class="already-in-queue-button recheck cdio-btn cdio-btn--primary cdio-btn--sm" style="display: none;" disabled="disabled"><i data-feather="clock"></i>{{ _('Queued') }}</a>
                     <button type="submit" formmethod="post"

@@ -118,7 +118,7 @@ $watch-table-mobile-max: 767px;
         padding-bottom: 12px;
         margin-bottom: 1rem;
         display: grid;
-        grid-template-columns: $grid-col-checkbox 1fr $grid-col-watch;
+        grid-template-columns: $grid-col-checkbox minmax(var(--watch-actions-width, 13rem), 1fr) $grid-col-watch;
         grid-template-rows: auto auto auto auto;
         gap: $grid-gap;
 
@@ -142,6 +142,10 @@ $watch-table-mobile-max: 767px;
         > td.title-col {
           grid-column: 1 / -1;
           grid-row: 1;
+          .watch-summary {
+            block-size: var(--watch-summary-height, 3rem);
+            overflow: hidden;
+          }
           .watch-title {
             font-size: 0.92rem;
           }
@@ -171,6 +175,10 @@ $watch-table-mobile-max: 767px;
           display: flex;
           align-items: center;
           justify-content: center;
+          .watch-actions {
+            inline-size: var(--watch-actions-width, max-content);
+            flex-wrap: nowrap;
+          }
         }
 
         > td.watch-controls {
@@ -188,6 +196,15 @@ $watch-table-mobile-max: 767px;
   }
   .pure-table td {
     padding: 0 !important;
+  }
+
+  #checkbox-operations[data-list-layout="measured"] {
+    box-sizing: border-box;
+    inline-size: var(--watch-bulk-width, 100%);
+    max-width: none;
+    block-size: var(--watch-bulk-height, 3.5rem);
+    overflow: hidden;
+    z-index: 2;
   }
 }
 

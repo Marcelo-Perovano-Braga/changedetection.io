@@ -283,6 +283,10 @@ $(document).ready(function () {
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
                     $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
 
+                    if (window.cdioWatchLayout) {
+                        window.cdioWatchLayout.refreshRow($watchRow[0]);
+                    }
+
                     console.log('Updated UI for watch:', watch.uuid);
                 }
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));

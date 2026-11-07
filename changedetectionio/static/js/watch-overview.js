@@ -492,3 +492,149 @@ $(function () {
     }
 });
 
+// Share row measurements between the initial list and realtime status updates.
+(function () {
+    const measurements = new Map();
+    let bulkMeasurement = null;
+    let frame = null;
+
+    function pixels(value, fallback) {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function createProbe(source) {
+        const probe = source.cloneNode(true);
+        probe.removeAttribute('id');
+        probe.removeAttribute('data-row-actions');
+        probe.setAttribute('aria-hidden', 'true');
+        probe.querySelectorAll('[id]').forEach(function (element) {
+            element.removeAttribute('id');
+        });
+        probe.querySelectorAll('a, button, input, select').forEach(function (element) {
+            element.setAttribute('tabindex', '-1');
+        });
+        Object.assign(probe.style, {
+            position: 'absolute',
+            left: '-10000px',
+            top: '0',
+            visibility: 'hidden',
+            pointerEvents: 'none',
+            maxWidth: 'none',
+            height: 'auto',
+            blockSize: 'auto',
+            overflow: 'visible'
+        });
+        return probe;
+    }
+
+    function actionWidth(group) {
+        if (!group) return 0;
+        const probe = createProbe(group);
+        Object.assign(probe.style, {
+            display: 'inline-flex',
+            inlineSize: 'max-content',
+            whiteSpace: 'nowrap',
+            flexWrap: 'nowrap'
+        });
+        // Reserve a stable action lane when a watch changes history/queue state.
+        Array.from(probe.children).forEach(function (action) {
+            action.style.setProperty('display', 'inline-flex', 'important');
+        });
+        group.parentElement.appendChild(probe);
+        const width = Math.ceil(probe.getBoundingClientRect().width);
+        probe.remove();
+        return width;
+    }
+
+    function measureRow(row) {
+        const title = row.querySelector('[data-row-title]');
+        const summary = row.querySelector('[data-row-summary]');
+        if (!title || !summary) return null;
+        const titleStyle = getComputedStyle(title);
+        const lineHeight = pixels(titleStyle.lineHeight, 24);
+        return {
+            actions: actionWidth(row.querySelector('[data-row-actions]')),
+            summary: Math.ceil(Math.max(lineHeight, title.getBoundingClientRect().height))
+        };
+    }
+
+    function applyRow(row) {
+        const uuid = row.getAttribute('data-watch-uuid');
+        if (!uuid) return;
+        let measurement = measurements.get(uuid);
+        if (!measurement) {
+            measurement = measureRow(row);
+            if (!measurement) return;
+            measurements.set(uuid, measurement);
+        }
+        row.style.setProperty('--watch-actions-width', measurement.actions + 'px');
+        row.style.setProperty('--watch-summary-height', measurement.summary + 'px');
+    }
+
+    function measureBulk(bar, table) {
+        const probe = createProbe(bar);
+        const barStyle = getComputedStyle(bar);
+        const width = Math.ceil(Math.max(768, table.getBoundingClientRect().width));
+        Object.assign(probe.style, {
+            display: 'block',
+            boxSizing: 'border-box',
+            inlineSize: width + 'px',
+            whiteSpace: 'nowrap',
+            padding: barStyle.padding,
+            font: barStyle.font
+        });
+        Array.from(bar.children).forEach(function (button, index) {
+            const target = probe.children[index];
+            if (!target || button.tagName !== 'BUTTON') return;
+            const style = getComputedStyle(button);
+            target.style.display = style.display;
+            target.style.padding = style.padding;
+            target.style.margin = style.margin;
+            target.style.font = style.font;
+        });
+        bar.parentElement.appendChild(probe);
+        const height = Math.ceil(Math.max(56, probe.getBoundingClientRect().height));
+        probe.remove();
+        return {width: width, height: height};
+    }
+
+    function applyBulk(table) {
+        const bar = document.querySelector('#checkbox-operations[data-list-layout]');
+        if (!bar) return;
+        if (!bulkMeasurement) bulkMeasurement = measureBulk(bar, table);
+        bar.style.setProperty('--watch-bulk-width', bulkMeasurement.width + 'px');
+        bar.style.setProperty('--watch-bulk-height', bulkMeasurement.height + 'px');
+    }
+
+    function refresh() {
+        frame = null;
+        const table = document.querySelector('.watch-table');
+        if (!table) return;
+        table.querySelectorAll('tbody tr[data-row-layout]').forEach(applyRow);
+        applyBulk(table);
+    }
+
+    function scheduleRefresh() {
+        if (frame === null) frame = requestAnimationFrame(refresh);
+    }
+
+    window.cdioWatchLayout = {
+        refresh: scheduleRefresh,
+        refreshRow: function (row) {
+            if (row) applyRow(row);
+            scheduleRefresh();
+        }
+    };
+
+    $(function () {
+        refresh();
+        $(window).on('resize.watchLayout', scheduleRefresh);
+        $(document).on('change.watchLayout', 'input[name="uuids"], #check-all', scheduleRefresh);
+        $(document).on('click.watchLayout', '#check-cancel, #check-invert', scheduleRefresh);
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(scheduleRefresh);
+        }
+    });
+})();
+
